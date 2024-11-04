@@ -1,18 +1,21 @@
 package cmd
 
 import (
-	"doocloud/internal/config"
-	"doocloud/router"
+	_ "dooalioss/docs"
+	"dooalioss/internal/config"
+	"dooalioss/router"
 	"fmt"
 	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/swaggo/gin-swagger/swaggerFiles"
 )
 
 // rootCmd 代表基本命令
 var rootCmd = &cobra.Command{
-	Use:   "doocloud",
+	Use:   "dooalioss",
 	Short: "A brief description of your application",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// 加载配置
@@ -23,6 +26,8 @@ var rootCmd = &cobra.Command{
 
 		// 设置路由
 		router.SetupRoutes(r)
+
+		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 		// 启动服务器
 		fmt.Println("Starting server on :" + cfg.Port)

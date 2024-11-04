@@ -16,3 +16,10 @@ type Config struct {
 type Uploader interface {
 	Upload(file multipart.File, objectName string) (string, error)
 }
+
+// FileInfo 包含文件基本信息
+type FileInfo struct {
+	Key          string `json:"key"`
+	Size         int64  `json:"size"`
+	LastModified string `json:"last_modified"`
+}

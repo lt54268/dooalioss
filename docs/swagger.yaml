@@ -1,0 +1,110 @@
+info:
+  contact: {}
+paths:
+  /delete:
+    delete:
+      description: 从阿里云 OSS 删除指定文件
+      parameters:
+      - description: 文件名
+        in: query
+        name: file_name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 删除文件
+      tags:
+      - 文件操作
+  /download:
+    get:
+      description: 从阿里云 OSS 下载指定文件
+      parameters:
+      - description: 文件名
+        in: query
+        name: file_name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 下载文件
+      tags:
+      - 文件操作
+  /list:
+    get:
+      description: 从阿里云 OSS 获取文件列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取文件列表
+      tags:
+      - 文件操作
+  /upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 接收文件并上传到阿里云 OSS
+      parameters:
+      - description: 文件
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 上传文件到阿里云 OSS
+      tags:
+      - 文件操作
+swagger: "2.0"

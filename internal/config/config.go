@@ -1,7 +1,7 @@
 package config
 
 import (
-	"doocloud/internal/model"
+	"dooalioss/internal/model"
 	"os"
 )
 

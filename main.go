@@ -1,6 +1,6 @@
 package main
 
-import "doocloud/cmd"
+import "dooalioss/cmd"
 
 func main() {
 	cmd.Execute()

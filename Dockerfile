@@ -16,7 +16,7 @@ RUN go mod download
 COPY . .
 
 # 编译项目
-RUN go build -o doocloud-app .
+RUN go build -o dooalioss-app .
 
 # 第二阶段：运行阶段
 FROM alpine:latest
@@ -25,7 +25,7 @@ FROM alpine:latest
 WORKDIR /app
 
 # 复制可执行文件和其他需要的文件
-COPY --from=builder /app/doocloud-app .
+COPY --from=builder /app/dooalioss-app .
 
 # 如果你的项目使用.env文件
 COPY --from=builder /app/.env . 
@@ -34,4 +34,4 @@ COPY --from=builder /app/.env .
 EXPOSE 3030
 
 # 启动应用程序
-CMD ["./doocloud-app"]
+CMD ["./dooalioss-app"]
