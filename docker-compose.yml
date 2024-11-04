@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: doocloud-app
+    image: doocloud-app:latest
+    ports:
+      - "3030:3030"
+    environment:
+      - PORT=3030
+      - OSS_REGION=${OSS_REGION}
+      - OSS_ENDPOINT=${OSS_ENDPOINT}
+      - OSS_BUCKET=${OSS_BUCKET}
+      - OSS_ACCESS_KEY_ID=${OSS_ACCESS_KEY_ID}
+      - OSS_ACCESS_KEY_SECRET=${OSS_ACCESS_KEY_SECRET}
+    env_file:
+      - .env
+    restart: always
+    

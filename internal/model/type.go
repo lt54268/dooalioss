@@ -1,15 +1,18 @@
 package model
 
+import "mime/multipart"
+
 // Config 用于存储配置信息
 type Config struct {
-	Port     string
-	Region   string
-	Endpoint string
-	Bucket   string
+	Port               string
+	OssRegion          string
+	OssEndpoint        string
+	OssBucket          string
+	OssAccessKeyId     string
+	OssAccessKeySecret string
 }
 
-type UploadResponse struct {
-	Code int    `json:"code"`
-	Msg  string `json:"msg"`
-	URL  string `json:"url,omitempty"`
+// Uploader 定义上传接口
+type Uploader interface {
+	Upload(file multipart.File, objectName string) (string, error)
 }

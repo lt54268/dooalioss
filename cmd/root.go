@@ -16,7 +16,7 @@ var rootCmd = &cobra.Command{
 	Short: "A brief description of your application",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// 加载配置
-		cfg := config.LoadConfig()
+		cfg := config.LoadOssConfig()
 
 		// 创建 Gin 引擎
 		r := gin.Default()
