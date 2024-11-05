@@ -1,7 +1,7 @@
 # 阿里云OSS
 运行：go run main.go
 
-## 上传接口
+## 一、上传接口（POST）
 http://127.0.0.1:3030/upload
 
 Body：file
@@ -15,14 +15,14 @@ Body：file
 }
 ```
 
-## 下载接口
+## 二、下载接口（GET）
 http://127.0.0.1:3030/download
 
 参数：objectName
 
 返回示例：返回文件，浏览器自动跳转下载
 
-## 删除接口
+## 三、删除接口（DELETE）
 http://127.0.0.1:3030/delete
 
 参数：objectName
@@ -35,7 +35,7 @@ http://127.0.0.1:3030/delete
 }
 ```
 
-## 获取文件列表接口
+## 四、获取文件列表接口（GET）
 http://127.0.0.1:3030/list
 
 参数：无
