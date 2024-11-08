@@ -8,7 +8,7 @@ import (
 
 // SetupRoutes 设置 Gin 路由
 func SetupRoutes(r *gin.Engine) {
-	v1 := r.Group("api//v1")
+	v1 := r.Group("/api/v1")
 	{
 		v1.POST("/upload", api.UploadHandler)
 		v1.GET("/download", api.DownloadFileHandler)
