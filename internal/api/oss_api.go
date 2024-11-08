@@ -31,13 +31,13 @@ func UploadHandler(c *gin.Context) {
 	defer file.Close()
 
 	// 使用通用上传接口上传文件
-	url, err := uploader.Upload(file, fileName)
+	info, err := uploader.Upload(file, fileName)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "msg": "上传失败"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "上传成功", "url": url})
+	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "上传成功", "data": info})
 }
 
 // DownloadFileHandler godoc
@@ -56,7 +56,7 @@ func DownloadFileHandler(c *gin.Context) {
 	if objectName == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code": http.StatusBadRequest,
-			"msg":  "objectName query parameter is required",
+			"msg":  "object_Name 参数缺失",
 		})
 		return
 	}
@@ -93,7 +93,7 @@ func DeleteFileHandler(c *gin.Context) {
 	if objectName == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code": http.StatusBadRequest,
-			"msg":  "objectName query parameter is required",
+			"msg":  "object_Name 参数缺失",
 		})
 		return
 	}
@@ -110,7 +110,7 @@ func DeleteFileHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": http.StatusOK,
-		"msg":  "File deleted successfully",
+		"msg":  "文件删除成功",
 	})
 }
 
@@ -135,7 +135,7 @@ func ListFilesHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": http.StatusOK,
-		"msg":  "File list retrieved successfully",
+		"msg":  "文件列表获取成功",
 		"data": files,
 	})
 }

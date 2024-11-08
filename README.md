@@ -2,7 +2,7 @@
 运行：go run main.go
 
 ## 一、上传接口（POST）
-http://127.0.0.1:3030/upload
+http://127.0.0.1:3030/api/v1/upload
 
 Body：file
 
@@ -10,20 +10,24 @@ Body：file
 ```
 {
     "code": 200,
-    "msg": "上传成功",
-    "url": "https://cloud-xxx.oss-cn-xxx.aliyuncs.com/大模型测评报告.docx"
+    "data": {
+        "content-length": 670197,
+        "etag": "\"FDCXXXXXXXXXXXXXXXXXXXXXXXXXX\"",
+        "last-modified": "2024-11-08T01:59:32Z"
+    },
+    "msg": "上传成功"
 }
 ```
 
 ## 二、下载接口（GET）
-http://127.0.0.1:3030/download
+http://127.0.0.1:3030/api/v1/download
 
 参数：objectName
 
 返回示例：返回文件，浏览器自动跳转下载
 
 ## 三、删除接口（DELETE）
-http://127.0.0.1:3030/delete
+http://127.0.0.1:3030/api/v1/delete
 
 参数：objectName
 
@@ -31,12 +35,12 @@ http://127.0.0.1:3030/delete
 ```
 {
     "code": 200,
-    "msg": "File deleted successfully"
+    "msg": "文件删除成功"
 }
 ```
 
 ## 四、获取文件列表接口（GET）
-http://127.0.0.1:3030/list
+http://127.0.0.1:3030/api/v1/list
 
 参数：无
 
@@ -47,16 +51,18 @@ http://127.0.0.1:3030/list
     "data": [
         {
             "key": "10.14会议纪要.docx",
-            "size": 14077,
-            "last_modified": "2024-11-04 03:29:47"
+            "content-length": 13769,
+            "etag": "\"850XXXXXXXXXXXXXXXXXXXXXXXXXXXX\"",
+            "last_modified": "2024-11-07T07:55:07Z"
         },
         {
-            "key": "大模型测评报告.docx",
-            "size": 16530,
-            "last_modified": "2024-11-04 06:30:45"
+            "key": "test1/",
+            "content-length": 0,
+            "etag": "\"D41XXXXXXXXXXXXXXXXXXXXXXXXXXXX\"",
+            "last_modified": "2024-11-07T08:34:18Z"
         }
     ],
-    "msg": "File list retrieved successfully"
+    "msg": "文件列表获取成功"
 }
 ```
 

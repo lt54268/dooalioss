@@ -23,7 +23,7 @@ func NewOssUploader() *OssUploader {
 }
 
 // Upload 实现 Uploader 接口中的 Upload 方法
-func (u *OssUploader) Upload(file multipart.File, objectName string) (string, error) {
+func (u *OssUploader) Upload(file multipart.File, objectName string) (*model.UploadResponse, error) {
 	// 初始化 OSS 客户端
 	cfg := oss.LoadDefaultConfig().
 		WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
@@ -44,12 +44,24 @@ func (u *OssUploader) Upload(file multipart.File, objectName string) (string, er
 	// 上传文件
 	_, err := client.PutObject(context.TODO(), request)
 	if err != nil {
-		return "", fmt.Errorf("failed to upload object: %v", err)
+		return nil, fmt.Errorf("failed to upload object: %v", err)
 	}
 
-	// 构建远程 URL
-	remoteURL := fmt.Sprintf("https://%s.%s/%s", config.LoadOssConfig().OssBucket, config.LoadOssConfig().OssEndpoint, objectName)
-	return remoteURL, nil
+	// 上传成功后，获取文件信息
+	objectInfo, err := client.HeadObject(context.TODO(), &oss.HeadObjectRequest{
+		Bucket: oss.Ptr(config.LoadOssConfig().OssBucket),
+		Key:    oss.Ptr(objectName),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve object info: %v", err)
+	}
+
+	// 返回文件信息
+	return &model.UploadResponse{
+		ContentLength: objectInfo.ContentLength,
+		ETag:          *objectInfo.ETag,
+		LastModified:  *objectInfo.LastModified,
+	}, nil
 }
 
 // DownloadFile 从阿里云OSS下载文件
@@ -147,9 +159,10 @@ func ListFiles() ([]model.FileInfo, error) {
 		// 收集每个对象的信息
 		for _, obj := range page.Contents {
 			fileInfos = append(fileInfos, model.FileInfo{
-				Key:          oss.ToString(obj.Key),
-				Size:         obj.Size,
-				LastModified: oss.ToTime(obj.LastModified).Format("2006-01-02 15:04:05"),
+				Key:           oss.ToString(obj.Key),
+				ContentLength: obj.Size,
+				ETag:          oss.ToString(obj.ETag),
+				LastModified:  oss.ToTime(obj.LastModified),
 			})
 		}
 	}
