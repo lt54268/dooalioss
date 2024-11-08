@@ -14,5 +14,7 @@ func SetupRoutes(r *gin.Engine) {
 		v1.GET("/download", api.DownloadFileHandler)
 		v1.DELETE("/delete", api.DeleteFileHandler)
 		v1.GET("/list", api.ListFilesHandler)
+		v1.POST("/copy", api.CopyFileHandler)
+		v1.POST("/rename", api.RenameFileHandler)
 	}
 }

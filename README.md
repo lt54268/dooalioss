@@ -66,5 +66,31 @@ http://127.0.0.1:3030/api/v1/list
 }
 ```
 
+## 五、拷贝接口（POST）
+http://127.0.0.1:3030/api/v1/copy
+
+参数：srcBucket、srcObject、destBucket、destObject
+
+返回示例：同一个桶不需要传destBucket参数
+```
+{
+  "code": 200,
+  "msg": "文件拷贝成功"
+}
+```
+
+## 六、重命名接口（POST）
+http://127.0.0.1:3030/api/v1/rename
+
+参数：srcObject、destObject
+
+返回示例：
+```
+{
+  "code": 200,
+  "msg": "文件'10.14会议纪要复制版.docx'重命名为'10.14会议纪要重命名版.docx'成功"
+}
+```
+
 ### 说明：
 阿里云OSS对象存储，上传同名文件会自动覆盖旧文件

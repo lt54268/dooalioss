@@ -169,3 +169,81 @@ func ListFiles() ([]model.FileInfo, error) {
 
 	return fileInfos, nil
 }
+
+// CopyFile 拷贝文件到目标存储空间
+func CopyFile(srcBucket, srcObject, destBucket, destObject string) error {
+	region := os.Getenv("OSS_REGION")
+
+	if srcBucket == "" || srcObject == "" || destObject == "" || region == "" {
+		return errors.New("invalid parameters: source bucket, source object, destination object, and region are required")
+	}
+
+	// 如果目标存储空间未指定，默认为源存储空间
+	if destBucket == "" {
+		destBucket = srcBucket
+	}
+
+	cfg := oss.LoadDefaultConfig().
+		WithCredentialsProvider(credentials.NewEnvironmentVariableCredentialsProvider()).
+		WithRegion(region)
+
+	client := oss.NewClient(cfg)
+
+	request := &oss.CopyObjectRequest{
+		Bucket:       oss.Ptr(destBucket),
+		Key:          oss.Ptr(destObject),
+		SourceBucket: oss.Ptr(srcBucket),
+		SourceKey:    oss.Ptr(srcObject),
+	}
+
+	_, err := client.CopyObject(context.TODO(), request)
+	if err != nil {
+		return fmt.Errorf("failed to copy object: %v", err)
+	}
+
+	return nil
+}
+
+// RenameFile 将源对象重命名为目标对象
+func RenameFile(srcObject, destObject string) error {
+	bucketName := os.Getenv("OSS_BUCKET")
+	region := os.Getenv("OSS_REGION")
+
+	if bucketName == "" || region == "" || srcObject == "" || destObject == "" {
+		return errors.New("invalid parameters: bucket name, region, source object, and destination object are required")
+	}
+
+	cfg := oss.LoadDefaultConfig().
+		WithCredentialsProvider(credentials.NewEnvironmentVariableCredentialsProvider()).
+		WithRegion(region)
+
+	client := oss.NewClient(cfg)
+
+	// 创建 CopyObject 请求，将源对象复制到目标位置
+	copyRequest := &oss.CopyObjectRequest{
+		Bucket:       oss.Ptr(bucketName),
+		Key:          oss.Ptr(destObject),
+		SourceKey:    oss.Ptr(srcObject),
+		SourceBucket: oss.Ptr(bucketName),
+	}
+
+	// 执行 CopyObject 操作
+	_, err := client.CopyObject(context.TODO(), copyRequest)
+	if err != nil {
+		return fmt.Errorf("failed to copy object '%s' to '%s': %v", srcObject, destObject, err)
+	}
+
+	// 创建 DeleteObject 请求，删除源对象
+	deleteRequest := &oss.DeleteObjectRequest{
+		Bucket: oss.Ptr(bucketName),
+		Key:    oss.Ptr(srcObject),
+	}
+
+	// 执行 DeleteObject 操作
+	_, err = client.DeleteObject(context.TODO(), deleteRequest)
+	if err != nil {
+		return fmt.Errorf("failed to delete source object '%s': %v", srcObject, err)
+	}
+
+	return nil
+}
