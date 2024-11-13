@@ -1,92 +1,242 @@
+definitions:
+  model.FileInfo:
+    properties:
+      content-length:
+        type: integer
+      etag:
+        type: string
+      key:
+        type: string
+      last_modified:
+        type: string
+    type: object
+  model.UploadResponse:
+    properties:
+      content-length:
+        type: integer
+      etag:
+        type: string
+      last-modified:
+        type: string
+    type: object
 info:
   contact: {}
 paths:
-  /delete:
-    delete:
-      description: 从阿里云 OSS 删除指定文件
+  /api/v1/copy:
+    post:
+      consumes:
+      - application/json
+      description: 根据源存储桶和对象，将文件拷贝到目标存储桶和对象
       parameters:
-      - description: 文件名
+      - description: 源存储桶名称
         in: query
-        name: file_name
+        name: srcBucket
+        required: true
+        type: string
+      - description: 源对象名称（文件名）
+        in: query
+        name: srcObject
+        required: true
+        type: string
+      - description: 目标存储桶名称（可选）
+        in: query
+        name: destBucket
+        type: string
+      - description: 目标对象名称（文件名）
+        in: query
+        name: destObject
         required: true
         type: string
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 文件拷贝成功
           schema:
             additionalProperties: true
             type: object
         "400":
-          description: Bad Request
+          description: 缺少必需的参数
           schema:
             additionalProperties: true
             type: object
-        "404":
-          description: Not Found
+        "500":
+          description: 文件拷贝失败
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 拷贝文件
+      tags:
+      - 文件管理
+  /api/v1/delete:
+    delete:
+      consumes:
+      - application/json
+      description: 根据文件名删除文件
+      parameters:
+      - description: 文件名
+        in: query
+        name: objectName
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 文件删除成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: object_Name 参数缺失
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 文件删除失败
           schema:
             additionalProperties: true
             type: object
       summary: 删除文件
       tags:
-      - 文件操作
-  /download:
+      - 文件管理
+  /api/v1/download:
     get:
-      description: 从阿里云 OSS 下载指定文件
+      consumes:
+      - application/json
+      description: 根据文件名下载文件
       parameters:
       - description: 文件名
         in: query
-        name: file_name
+        name: objectName
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: 文件数据流
+          schema:
+            type: file
+        "400":
+          description: object_Name 参数缺失
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 文件下载失败
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 下载文件
+      tags:
+      - 文件管理
+  /api/v1/list:
+    get:
+      consumes:
+      - application/json
+      description: 返回存储中的所有文件列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 文件列表获取成功
+          schema:
+            $ref: '#/definitions/model.FileInfo'
+        "500":
+          description: 文件列表获取失败
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取文件列表
+      tags:
+      - 文件管理
+  /api/v1/logs:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询日志
+      parameters:
+      - description: 查询条件
+        in: query
+        name: query
+        type: string
+      - description: 开始时间，Unix 时间戳
+        in: query
+        name: startTime
+        type: integer
+      - description: 结束时间，Unix 时间戳
+        in: query
+        name: endTime
+        type: integer
+      - description: 返回日志条数上限
+        in: query
+        name: limit
+        type: integer
+      - description: 分页起始位置
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 日志查询成功
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 日志查询失败
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 查询日志
+      tags:
+      - 日志管理
+  /api/v1/rename:
+    post:
+      consumes:
+      - application/json
+      description: 根据源对象名称将文件重命名为目标对象名称
+      parameters:
+      - description: 源对象名称（当前文件名）
+        in: query
+        name: srcObject
+        required: true
+        type: string
+      - description: 目标对象名称（新的文件名）
+        in: query
+        name: destObject
         required: true
         type: string
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 文件重命名成功
           schema:
             additionalProperties: true
             type: object
         "400":
-          description: Bad Request
-          schema:
-            additionalProperties: true
-            type: object
-        "404":
-          description: Not Found
-          schema:
-            additionalProperties: true
-            type: object
-      summary: 下载文件
-      tags:
-      - 文件操作
-  /list:
-    get:
-      description: 从阿里云 OSS 获取文件列表
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
+          description: 缺少必需的参数
           schema:
             additionalProperties: true
             type: object
         "500":
-          description: Internal Server Error
+          description: 文件重命名失败
           schema:
             additionalProperties: true
             type: object
-      summary: 获取文件列表
+      summary: 重命名文件
       tags:
-      - 文件操作
-  /upload:
+      - 文件管理
+  /api/v1/upload:
     post:
       consumes:
       - multipart/form-data
-      description: 接收文件并上传到阿里云 OSS
+      description: 处理文件上传请求
       parameters:
-      - description: 文件
+      - description: 上传的文件
         in: formData
         name: file
         required: true
@@ -95,16 +245,20 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 上传成功
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/model.UploadResponse'
         "400":
-          description: Bad Request
+          description: 文件解析失败
           schema:
             additionalProperties: true
             type: object
-      summary: 上传文件到阿里云 OSS
+        "500":
+          description: 上传失败
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 上传文件
       tags:
-      - 文件操作
+      - 文件管理
 swagger: "2.0"

@@ -7,19 +7,38 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"os"
 
 	"github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss"
 	"github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss/credentials"
+	sls "github.com/aliyun/aliyun-log-go-sdk"
 )
 
 // OssUploader 实现了 Uploader 接口，支持阿里云 OSS 上传
 type OssUploader struct{}
 
+type LogQueryService struct {
+	client sls.ClientInterface
+}
+
 // NewOssUploader 返回 OssUploader 实例
 func NewOssUploader() *OssUploader {
 	return &OssUploader{}
+}
+
+// NewLogQueryService 构造函数，返回 LogQueryService 实例
+func NewLogQueryService() *LogQueryService {
+	// 配置客户端
+	Endpoint := os.Getenv("OSS_LOG_ENDPOINT")
+	AccessKeyId := os.Getenv("OSS_ACCESS_KEY_ID")
+	AccessKeySecret := os.Getenv("OSS_ACCESS_KEY_SECRET")
+
+	provider := sls.NewStaticCredentialsProvider(AccessKeyId, AccessKeySecret, "")
+	client := sls.CreateNormalInterfaceV2(Endpoint, provider)
+
+	return &LogQueryService{client: client}
 }
 
 // Upload 实现 Uploader 接口中的 Upload 方法
@@ -246,4 +265,16 @@ func RenameFile(srcObject, destObject string) error {
 	}
 
 	return nil
+}
+
+// QueryLogs 查询日志
+func (s *LogQueryService) QueryLogs(projectName, logStoreName, query string, startTime, endTime int64, limit, offset int) ([]map[string]string, error) {
+	// 发起日志查询
+	response, err := s.client.GetLogs(projectName, logStoreName, "", startTime, endTime, query, int64(limit), int64(offset), true)
+	if err != nil {
+		return nil, fmt.Errorf("GetLogs failed: %v", err)
+	}
+
+	log.Println("Logs retrieved successfully.")
+	return response.Logs, nil
 }

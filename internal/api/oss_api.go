@@ -6,22 +6,26 @@ import (
 	"dooalioss/utils"
 	"fmt"
 	"net/http"
+	"os"
+	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-var uploader model.Uploader = service.NewOssUploader() // 使用阿里云 OSS 上传器
+var uploader model.Uploader = service.NewOssUploader()
 
-// UploadFileHandler godoc
-// @Summary 上传文件到阿里云 OSS
-// @Description 接收文件并上传到阿里云 OSS
-// @Tags 文件操作
+// UploadHandler 上传文件接口
+// @Summary 上传文件
+// @Description 处理文件上传请求
+// @Tags 文件管理
 // @Accept multipart/form-data
 // @Produce json
-// @Param file formData file true "文件"
-// @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]interface{}
-// @Router /upload [post]
+// @Param file formData file true "上传的文件"
+// @Success 200 {object} model.UploadResponse "上传成功"
+// @Failure 400 {object} map[string]interface{} "文件解析失败"
+// @Failure 500 {object} map[string]interface{} "上传失败"
+// @Router /api/v1/upload [post]
 func UploadHandler(c *gin.Context) {
 	// 使用工具函数解析文件
 	file, fileName, err := utils.ParseFile(c, "file")
@@ -41,16 +45,17 @@ func UploadHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "上传成功", "data": info})
 }
 
-// DownloadFileHandler godoc
+// DownloadFileHandler 文件下载接口
 // @Summary 下载文件
-// @Description 从阿里云 OSS 下载指定文件
-// @Tags 文件操作
-// @Produce json
-// @Param file_name query string true "文件名"
-// @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]interface{}
-// @Failure 404 {object} map[string]interface{}
-// @Router /download [get]
+// @Description 根据文件名下载文件
+// @Tags 文件管理
+// @Accept json
+// @Produce application/octet-stream
+// @Param objectName query string true "文件名"
+// @Success 200 {file} file "文件数据流"
+// @Failure 400 {object} map[string]interface{} "object_Name 参数缺失"
+// @Failure 500 {object} map[string]interface{} "文件下载失败"
+// @Router /api/v1/download [get]
 func DownloadFileHandler(c *gin.Context) {
 	objectName := c.Query("objectName") // 从请求的查询参数中获取文件名
 
@@ -77,17 +82,17 @@ func DownloadFileHandler(c *gin.Context) {
 	c.Data(http.StatusOK, "application/octet-stream", data)
 }
 
-// DeleteFileHandler godoc
+// DeleteFileHandler 文件删除接口
 // @Summary 删除文件
-// @Description 从阿里云 OSS 删除指定文件
-// @Tags 文件操作
+// @Description 根据文件名删除文件
+// @Tags 文件管理
+// @Accept json
 // @Produce json
-// @Param file_name query string true "文件名"
-// @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]interface{}
-// @Failure 404 {object} map[string]interface{}
-// @Router /delete [delete]
-// DeleteFileHandler 处理文件删除请求
+// @Param objectName query string true "文件名"
+// @Success 200 {object} map[string]interface{} "文件删除成功"
+// @Failure 400 {object} map[string]interface{} "object_Name 参数缺失"
+// @Failure 500 {object} map[string]interface{} "文件删除失败"
+// @Router /api/v1/delete [delete]
 func DeleteFileHandler(c *gin.Context) {
 	objectName := c.Query("objectName") // 从请求的查询参数中获取文件名
 
@@ -115,14 +120,15 @@ func DeleteFileHandler(c *gin.Context) {
 	})
 }
 
-// ListFilesHandler godoc
+// ListFilesHandler 获取文件列表接口
 // @Summary 获取文件列表
-// @Description 从阿里云 OSS 获取文件列表
-// @Tags 文件操作
+// @Description 返回存储中的所有文件列表
+// @Tags 文件管理
+// @Accept json
 // @Produce json
-// @Success 200 {object} map[string]interface{}
-// @Failure 500 {object} map[string]interface{}
-// @Router /list [get]
+// @Success 200 {object} model.FileInfo "文件列表获取成功"
+// @Failure 500 {object} map[string]interface{} "文件列表获取失败"
+// @Router /api/v1/list [get]
 func ListFilesHandler(c *gin.Context) {
 	// 调用服务函数获取文件列表
 	files, err := service.ListFiles()
@@ -141,6 +147,20 @@ func ListFilesHandler(c *gin.Context) {
 	})
 }
 
+// CopyFileHandler 文件拷贝接口
+// @Summary 拷贝文件
+// @Description 根据源存储桶和对象，将文件拷贝到目标存储桶和对象
+// @Tags 文件管理
+// @Accept json
+// @Produce json
+// @Param srcBucket query string true "源存储桶名称"
+// @Param srcObject query string true "源对象名称（文件名）"
+// @Param destBucket query string false "目标存储桶名称（可选）"
+// @Param destObject query string true "目标对象名称（文件名）"
+// @Success 200 {object} map[string]interface{} "文件拷贝成功"
+// @Failure 400 {object} map[string]interface{} "缺少必需的参数"
+// @Failure 500 {object} map[string]interface{} "文件拷贝失败"
+// @Router /api/v1/copy [post]
 func CopyFileHandler(c *gin.Context) {
 	srcBucket := c.Query("srcBucket")
 	srcObject := c.Query("srcObject")
@@ -172,6 +192,18 @@ func CopyFileHandler(c *gin.Context) {
 	})
 }
 
+// RenameFileHandler 文件重命名接口
+// @Summary 重命名文件
+// @Description 根据源对象名称将文件重命名为目标对象名称
+// @Tags 文件管理
+// @Accept json
+// @Produce json
+// @Param srcObject query string true "源对象名称（当前文件名）"
+// @Param destObject query string true "目标对象名称（新的文件名）"
+// @Success 200 {object} map[string]interface{} "文件重命名成功"
+// @Failure 400 {object} map[string]interface{} "缺少必需的参数"
+// @Failure 500 {object} map[string]interface{} "文件重命名失败"
+// @Router /api/v1/rename [post]
 func RenameFileHandler(c *gin.Context) {
 	srcObject := c.Query("srcObject")
 	destObject := c.Query("destObject")
@@ -199,4 +231,59 @@ func RenameFileHandler(c *gin.Context) {
 		"code": http.StatusOK,
 		"msg":  fmt.Sprintf("文件'%s'重命名为'%s'成功", srcObject, destObject),
 	})
+}
+
+// LogQueryHandler 处理日志查询请求
+// @Summary 查询日志
+// @Description 根据条件查询日志
+// @Tags 日志管理
+// @Accept json
+// @Produce json
+// @Param query query string false "查询条件"
+// @Param startTime query int64 false "开始时间，Unix 时间戳"
+// @Param endTime query int64 false "结束时间，Unix 时间戳"
+// @Param limit query int false "返回日志条数上限"
+// @Param offset query int false "分页起始位置"
+// @Success 200 {object} map[string]interface{} "日志查询成功"
+// @Failure 500 {object} map[string]interface{} "日志查询失败"
+// @Router /api/v1/logs [get]
+func LogQueryHandler(c *gin.Context) {
+	projectName := os.Getenv("OSS_PROJECT_NAME")
+	logStoreName := os.Getenv("OSS_LOG_STORE_NAME")
+	if projectName == "" || logStoreName == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "msg": "项目名称或日志库名称未配置"})
+		return
+	}
+
+	query := c.DefaultQuery("query", "*")
+	startTimeStr := c.Query("startTime")
+	endTimeStr := c.Query("endTime")
+	limitStr := c.DefaultQuery("limit", "1000")
+	offsetStr := c.DefaultQuery("offset", "0")
+
+	startTime, err := strconv.ParseInt(startTimeStr, 10, 64)
+	if err != nil {
+		startTime = time.Now().Add(-30 * 24 * time.Hour).Unix() // 默认过去一个月
+	}
+	endTime, err := strconv.ParseInt(endTimeStr, 10, 64)
+	if err != nil {
+		endTime = time.Now().Unix() // 默认当前时间
+	}
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit <= 0 {
+		limit = 1000 // 默认返回最多 1000 条日志
+	}
+	offset, err := strconv.Atoi(offsetStr)
+	if err != nil || offset < 0 {
+		offset = 0 // 默认从第 0 条日志开始
+	}
+
+	service := service.NewLogQueryService()
+	logs, err := service.QueryLogs(projectName, logStoreName, query, startTime, endTime, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "msg": "日志查询失败", "error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "日志查询成功", "data": logs})
 }

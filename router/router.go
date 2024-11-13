@@ -16,5 +16,6 @@ func SetupRoutes(r *gin.Engine) {
 		v1.GET("/list", api.ListFilesHandler)
 		v1.POST("/copy", api.CopyFileHandler)
 		v1.POST("/rename", api.RenameFileHandler)
+		v1.GET("/logs", api.LogQueryHandler)
 	}
 }
