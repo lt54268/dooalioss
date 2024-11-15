@@ -18,4 +18,9 @@ func SetupRoutes(r *gin.Engine) {
 		v1.POST("/rename", api.RenameFileHandler)
 		v1.GET("/logs", api.LogQueryHandler)
 	}
+
+	v2 := r.Group("/api/v2")
+	{
+		v2.GET("/list", api.ListFilesHandlerV2)
+	}
 }

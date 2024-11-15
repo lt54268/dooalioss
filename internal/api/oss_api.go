@@ -147,6 +147,52 @@ func ListFilesHandler(c *gin.Context) {
 	})
 }
 
+// ListFilesHandlerV2 获取文件列表接口（V2版本）
+// @Summary 获取文件列表（V2版本）
+// @Description 获取指定目录下的文件列表，并支持分页查询，返回文件列表及下一页的分页标记（Continuation Token）
+// @Tags 文件管理
+// @Accept json
+// @Produce json
+// @Param prefix query string false "文件前缀"
+// @Param continuationToken query string false "分页标记，继续上次查询的位置"
+// @Param limit query int false "每页返回的文件数，最大值为1000，默认为1000"
+// @Success 200 {object} map[string]interface{} "文件列表获取成功"
+// @Failure 400 {object} map[string]interface{} "Invalid limit parameter"
+// @Failure 500 {object} map[string]interface{} "获取文件列表失败"
+// @Router /api/v2/list [get]
+func ListFilesHandlerV2(c *gin.Context) {
+	// 获取请求参数
+	prefix := c.DefaultQuery("prefix", "")                       // 默认为 ""
+	continuationToken := c.DefaultQuery("continuationToken", "") // 默认为 ""
+	limitParam := c.DefaultQuery("limit", "1000")                // 默认为 1000
+	limit, err := strconv.Atoi(limitParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":  400,
+			"msg":   "Invalid limit parameter",
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// 调用服务函数获取文件列表
+	files, nextContinuationToken, err := service.ListFilesV2(prefix, continuationToken, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": http.StatusInternalServerError,
+			"msg":  err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":                  http.StatusOK,
+		"msg":                   "文件列表获取成功",
+		"data":                  files,
+		"NextContinuationToken": nextContinuationToken,
+	})
+}
+
 // CopyFileHandler 文件拷贝接口
 // @Summary 拷贝文件
 // @Description 根据源存储桶和对象，将文件拷贝到目标存储桶和对象

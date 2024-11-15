@@ -189,6 +189,83 @@ func ListFiles() ([]model.FileInfo, error) {
 	return fileInfos, nil
 }
 
+func ListFilesV2(prefix, continuationToken string, limit int) ([]model.FileInfo, string, error) {
+	bucketName := os.Getenv("OSS_BUCKET")
+	region := os.Getenv("OSS_REGION")
+
+	if bucketName == "" || region == "" {
+		return nil, "", errors.New("invalid parameters: bucket name and region are required")
+	}
+
+	// 设置默认值
+	if prefix == "" {
+		prefix = "" // 默认不筛选文件前缀，列出所有对象
+	}
+	if limit == 0 {
+		limit = 1000 // 默认最多返回1000个文件
+	}
+
+	cfg := oss.LoadDefaultConfig().
+		WithCredentialsProvider(credentials.NewEnvironmentVariableCredentialsProvider()).
+		WithRegion(region)
+
+	client := oss.NewClient(cfg)
+
+	// 创建 ListObjectsV2Request 请求
+	request := &oss.ListObjectsV2Request{
+		Bucket:            oss.Ptr(bucketName),
+		Prefix:            oss.Ptr(prefix),
+		ContinuationToken: oss.Ptr(continuationToken),
+		MaxKeys:           int32(limit),
+	}
+
+	// 使用分页器
+	paginator := client.NewListObjectsV2Paginator(request)
+	var fileInfos []model.FileInfo
+	var nextContinuationToken string
+	totalFiles := 0 // 用于控制返回文件数量
+
+	for paginator.HasNext() {
+		page, err := paginator.NextPage(context.TODO())
+		if err != nil {
+			return nil, "", fmt.Errorf("failed to get objects list: %v", err)
+		}
+
+		// 收集每个对象的信息
+		for _, obj := range page.Contents {
+			fileInfos = append(fileInfos, model.FileInfo{
+				Key:           oss.ToString(obj.Key),
+				ContentLength: obj.Size,
+				ETag:          oss.ToString(obj.ETag),
+				LastModified:  oss.ToTime(obj.LastModified),
+			})
+			totalFiles++
+			// 如果已收集的文件数量达到了限制，则停止
+			if totalFiles >= limit {
+				// 如果返回了 NextContinuationToken，使用它作为下一次查询的起点
+				if page.NextContinuationToken != nil {
+					nextContinuationToken = *page.NextContinuationToken
+				}
+				break
+			}
+		}
+
+		// 如果已经达到限制数量，则不再请求更多页面
+		if totalFiles >= limit {
+			break
+		}
+
+		// 如果返回了 NextContinuationToken，使用它作为下一次查询的起点
+		if page.NextContinuationToken != nil {
+			nextContinuationToken = *page.NextContinuationToken
+		} else {
+			break
+		}
+	}
+
+	return fileInfos, nextContinuationToken, nil
+}
+
 // CopyFile 拷贝文件到目标存储空间
 func CopyFile(srcBucket, srcObject, destBucket, destObject string) error {
 	region := os.Getenv("OSS_REGION")
