@@ -17,7 +17,7 @@ type Config struct {
 
 // Uploader 定义上传接口
 type Uploader interface {
-	Upload(file multipart.File, objectName string) (*UploadResponse, error)
+	Upload(file multipart.File, objectName string, forbidOverwrite bool) (*UploadResponse, error)
 }
 
 // FileInfo 包含文件基本信息

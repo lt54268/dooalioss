@@ -15,14 +15,15 @@ import (
 
 var uploader model.Uploader = service.NewOssUploader()
 
-// UploadHandler 上传文件接口
-// @Summary 上传文件
-// @Description 处理文件上传请求
+// UploadHandler 文件上传接口
+// @Summary 文件上传
+// @Description 处理文件上传请求，可选择是否禁止覆盖已有文件
 // @Tags 文件管理
 // @Accept multipart/form-data
 // @Produce json
-// @Param file formData file true "上传的文件"
-// @Success 200 {object} model.UploadResponse "上传成功"
+// @Param file formData file true "待上传的文件"
+// @Param forbidOverwrite query bool false "是否禁止覆盖已有文件（默认值为 false）"
+// @Success 200 {object} model.UploadResponse "上传成功，返回文件信息"
 // @Failure 400 {object} map[string]interface{} "文件解析失败"
 // @Failure 500 {object} map[string]interface{} "上传失败"
 // @Router /api/v1/upload [post]
@@ -35,8 +36,15 @@ func UploadHandler(c *gin.Context) {
 	}
 	defer file.Close()
 
+	// 获取 forbidOverwrite 参数，默认值为 false，表示允许覆盖文件
+	forbidOverwriteParam := c.DefaultQuery("forbidOverwrite", "false")
+	forbidOverwrite := false
+	if forbidOverwriteParam == "true" {
+		forbidOverwrite = true
+	}
+
 	// 使用通用上传接口上传文件
-	info, err := uploader.Upload(file, fileName)
+	info, err := uploader.Upload(file, fileName, forbidOverwrite)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "msg": "上传失败"})
 		return

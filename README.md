@@ -8,6 +8,9 @@ http://127.0.0.1:3030/api/v1/upload
 
 Body：file
 
+参数（可选）：
+forbidOverwrite（是否禁止覆盖同名文件，默认为false）
+
 返回示例：
 ```
 {

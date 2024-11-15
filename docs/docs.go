@@ -324,7 +324,7 @@ const docTemplate = `{
         },
         "/api/v1/upload": {
             "post": {
-                "description": "处理文件上传请求",
+                "description": "处理文件上传请求，可选择是否禁止覆盖已有文件",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -334,19 +334,25 @@ const docTemplate = `{
                 "tags": [
                     "文件管理"
                 ],
-                "summary": "上传文件",
+                "summary": "文件上传",
                 "parameters": [
                     {
                         "type": "file",
-                        "description": "上传的文件",
+                        "description": "待上传的文件",
                         "name": "file",
                         "in": "formData",
                         "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "是否禁止覆盖已有文件（默认值为 false）",
+                        "name": "forbidOverwrite",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "上传成功",
+                        "description": "上传成功，返回文件信息",
                         "schema": {
                             "$ref": "#/definitions/model.UploadResponse"
                         }

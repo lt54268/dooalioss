@@ -42,7 +42,7 @@ func NewLogQueryService() *LogQueryService {
 }
 
 // Upload 实现 Uploader 接口中的 Upload 方法
-func (u *OssUploader) Upload(file multipart.File, objectName string) (*model.UploadResponse, error) {
+func (u *OssUploader) Upload(file multipart.File, objectName string, forbidOverwrite bool) (*model.UploadResponse, error) {
 	cfg := oss.LoadDefaultConfig().
 		WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
 			config.LoadOssConfig().OssAccessKeyId,
@@ -54,9 +54,10 @@ func (u *OssUploader) Upload(file multipart.File, objectName string) (*model.Upl
 
 	// 创建上传请求
 	request := &oss.PutObjectRequest{
-		Bucket: oss.Ptr(config.LoadOssConfig().OssBucket),
-		Key:    oss.Ptr(objectName),
-		Body:   file,
+		Bucket:          oss.Ptr(config.LoadOssConfig().OssBucket),
+		Key:             oss.Ptr(objectName),
+		Body:            file,
+		ForbidOverwrite: oss.Ptr(fmt.Sprintf("%t", forbidOverwrite)), // 设置是否禁止覆盖
 	}
 
 	// 上传文件

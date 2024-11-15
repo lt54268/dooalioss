@@ -234,18 +234,22 @@ paths:
     post:
       consumes:
       - multipart/form-data
-      description: 处理文件上传请求
+      description: 处理文件上传请求，可选择是否禁止覆盖已有文件
       parameters:
-      - description: 上传的文件
+      - description: 待上传的文件
         in: formData
         name: file
         required: true
         type: file
+      - description: 是否禁止覆盖已有文件（默认值为 false）
+        in: query
+        name: forbidOverwrite
+        type: boolean
       produces:
       - application/json
       responses:
         "200":
-          description: 上传成功
+          description: 上传成功，返回文件信息
           schema:
             $ref: '#/definitions/model.UploadResponse'
         "400":
@@ -258,7 +262,7 @@ paths:
           schema:
             additionalProperties: true
             type: object
-      summary: 上传文件
+      summary: 文件上传
       tags:
       - 文件管理
   /api/v2/list:
