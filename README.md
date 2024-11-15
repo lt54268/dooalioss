@@ -42,6 +42,7 @@ http://127.0.0.1:3030/api/v1/delete
 ```
 
 ## 四、获取文件列表接口（GET）
+### V1版本
 http://127.0.0.1:3030/api/v1/list
 
 参数：无
@@ -62,6 +63,39 @@ http://127.0.0.1:3030/api/v1/list
             "content-length": 0,
             "etag": "\"D41XXXXXXXXXXXXXXXXXXXXXXXXXXXX\"",
             "last_modified": "2024-11-07T08:34:18Z"
+        }
+    ],
+    "msg": "文件列表获取成功"
+}
+```
+
+### V2版本
+http://127.0.0.1:3030/api/v2/list
+
+参数（可选）：
+prefix（返回的文件前缀，留空默认全部返回）
+
+continuationToken（游标，列举时继续读取上次的标记）
+
+maxKeys（每次返回的文件数量，默认一次返回1000条数据）
+
+返回示例：
+```
+{
+    "NextContinuationToken": "ChpBSeaooeWeiy_XXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "code": 200,
+    "data": [
+        {
+            "key": "11.05会议纪要.docx",
+            "content-length": 14567,
+            "etag": "\"8AXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\"",
+            "last_modified": "2024-11-13T01:25:16Z"
+        },
+        {
+            "key": "AI模型/测评报告.docx",
+            "content-length": 16530,
+            "etag": "\"1590XXXXXXXXXXXXXXXXXXXXXXXXXXXXX\"",
+            "last_modified": "2024-11-12T03:46:35Z"
         }
     ],
     "msg": "文件列表获取成功"

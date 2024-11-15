@@ -155,28 +155,28 @@ func ListFilesHandler(c *gin.Context) {
 // @Produce json
 // @Param prefix query string false "文件前缀"
 // @Param continuationToken query string false "分页标记，继续上次查询的位置"
-// @Param limit query int false "每页返回的文件数，最大值为1000，默认为1000"
+// @Param maxKeys query int false "每页返回的文件数，最大值为1000，默认为1000"
 // @Success 200 {object} map[string]interface{} "文件列表获取成功"
-// @Failure 400 {object} map[string]interface{} "Invalid limit parameter"
+// @Failure 400 {object} map[string]interface{} "Invalid maxKeys parameter"
 // @Failure 500 {object} map[string]interface{} "获取文件列表失败"
 // @Router /api/v2/list [get]
 func ListFilesHandlerV2(c *gin.Context) {
 	// 获取请求参数
 	prefix := c.DefaultQuery("prefix", "")                       // 默认为 ""
 	continuationToken := c.DefaultQuery("continuationToken", "") // 默认为 ""
-	limitParam := c.DefaultQuery("limit", "1000")                // 默认为 1000
-	limit, err := strconv.Atoi(limitParam)
+	maxKeysParam := c.DefaultQuery("maxKeys", "1000")            // 默认为 1000
+	maxKeys, err := strconv.Atoi(maxKeysParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code":  400,
-			"msg":   "Invalid limit parameter",
+			"msg":   "Invalid maxKeys parameter",
 			"error": err.Error(),
 		})
 		return
 	}
 
 	// 调用服务函数获取文件列表
-	files, nextContinuationToken, err := service.ListFilesV2(prefix, continuationToken, limit)
+	files, nextContinuationToken, err := service.ListFilesV2(prefix, continuationToken, maxKeys)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": http.StatusInternalServerError,

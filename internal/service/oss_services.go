@@ -16,21 +16,21 @@ import (
 	sls "github.com/aliyun/aliyun-log-go-sdk"
 )
 
-// OssUploader 实现了 Uploader 接口，支持阿里云 OSS 上传
+// 实现了 Uploader 接口，支持阿里云 OSS 上传
 type OssUploader struct{}
 
+// 日志查询服务
 type LogQueryService struct {
 	client sls.ClientInterface
 }
 
-// NewOssUploader 返回 OssUploader 实例
+// 返回 OssUploader 实例
 func NewOssUploader() *OssUploader {
 	return &OssUploader{}
 }
 
-// NewLogQueryService 构造函数，返回 LogQueryService 实例
+// 构造函数，返回 LogQueryService 实例
 func NewLogQueryService() *LogQueryService {
-	// 配置客户端
 	Endpoint := os.Getenv("OSS_LOG_ENDPOINT")
 	AccessKeyId := os.Getenv("OSS_ACCESS_KEY_ID")
 	AccessKeySecret := os.Getenv("OSS_ACCESS_KEY_SECRET")
@@ -43,7 +43,6 @@ func NewLogQueryService() *LogQueryService {
 
 // Upload 实现 Uploader 接口中的 Upload 方法
 func (u *OssUploader) Upload(file multipart.File, objectName string) (*model.UploadResponse, error) {
-	// 初始化 OSS 客户端
 	cfg := oss.LoadDefaultConfig().
 		WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
 			config.LoadOssConfig().OssAccessKeyId,
@@ -75,7 +74,6 @@ func (u *OssUploader) Upload(file multipart.File, objectName string) (*model.Upl
 		return nil, fmt.Errorf("failed to retrieve object info: %v", err)
 	}
 
-	// 返回文件信息
 	return &model.UploadResponse{
 		ContentLength: objectInfo.ContentLength,
 		ETag:          *objectInfo.ETag,
@@ -189,7 +187,7 @@ func ListFiles() ([]model.FileInfo, error) {
 	return fileInfos, nil
 }
 
-func ListFilesV2(prefix, continuationToken string, limit int) ([]model.FileInfo, string, error) {
+func ListFilesV2(prefix, continuationToken string, maxKeys int) ([]model.FileInfo, string, error) {
 	bucketName := os.Getenv("OSS_BUCKET")
 	region := os.Getenv("OSS_REGION")
 
@@ -201,8 +199,8 @@ func ListFilesV2(prefix, continuationToken string, limit int) ([]model.FileInfo,
 	if prefix == "" {
 		prefix = "" // 默认不筛选文件前缀，列出所有对象
 	}
-	if limit == 0 {
-		limit = 1000 // 默认最多返回1000个文件
+	if maxKeys == 0 {
+		maxKeys = 1000 // 默认最多返回1000个文件
 	}
 
 	cfg := oss.LoadDefaultConfig().
@@ -211,12 +209,12 @@ func ListFilesV2(prefix, continuationToken string, limit int) ([]model.FileInfo,
 
 	client := oss.NewClient(cfg)
 
-	// 创建 ListObjectsV2Request 请求
+	// 创建请求
 	request := &oss.ListObjectsV2Request{
 		Bucket:            oss.Ptr(bucketName),
 		Prefix:            oss.Ptr(prefix),
 		ContinuationToken: oss.Ptr(continuationToken),
-		MaxKeys:           int32(limit),
+		MaxKeys:           int32(maxKeys),
 	}
 
 	// 使用分页器
@@ -241,7 +239,7 @@ func ListFilesV2(prefix, continuationToken string, limit int) ([]model.FileInfo,
 			})
 			totalFiles++
 			// 如果已收集的文件数量达到了限制，则停止
-			if totalFiles >= limit {
+			if totalFiles >= maxKeys {
 				// 如果返回了 NextContinuationToken，使用它作为下一次查询的起点
 				if page.NextContinuationToken != nil {
 					nextContinuationToken = *page.NextContinuationToken
@@ -251,7 +249,7 @@ func ListFilesV2(prefix, continuationToken string, limit int) ([]model.FileInfo,
 		}
 
 		// 如果已经达到限制数量，则不再请求更多页面
-		if totalFiles >= limit {
+		if totalFiles >= maxKeys {
 			break
 		}
 
