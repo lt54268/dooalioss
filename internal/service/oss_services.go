@@ -10,6 +10,7 @@ import (
 	"log"
 	"mime/multipart"
 	"os"
+	"time"
 
 	"github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss"
 	"github.com/aliyun/alibabacloud-oss-go-sdk-v2/oss/credentials"
@@ -116,6 +117,66 @@ func DownloadFile(objectName string) ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+// GenerateDownloadURL 使用 Presign 方法生成阿里云OSS的预签名下载链接
+func GenerateDownloadURL(objectName string) (string, error) {
+	bucketName := os.Getenv("OSS_BUCKET")
+	region := os.Getenv("OSS_REGION")
+
+	if bucketName == "" || region == "" || objectName == "" {
+		return "", errors.New("invalid parameters: bucket name, region, and object name are required")
+	}
+
+	cfg := oss.LoadDefaultConfig().
+		WithCredentialsProvider(credentials.NewEnvironmentVariableCredentialsProvider()).
+		WithRegion(region)
+
+	client := oss.NewClient(cfg)
+
+	// 使用 Presign 方法生成签名
+	result, err := client.Presign(context.TODO(), &oss.GetObjectRequest{
+		Bucket: oss.Ptr(bucketName),
+		Key:    oss.Ptr(objectName),
+	}, oss.PresignExpires(1*time.Hour)) // 设置签名的有效期为1小时
+
+	if err != nil {
+		return "", fmt.Errorf("failed to generate presigned URL: %v", err)
+	}
+
+	return result.URL, nil
+}
+
+// DownloadFileToLocal 从阿里云OSS下载文件到本地目录
+func DownloadFileToLocal(objectName string) (string, error) {
+	bucketName := os.Getenv("OSS_BUCKET")
+	region := os.Getenv("OSS_REGION")
+	localDir := os.Getenv("OSS_DOWNLOAD_DIR") // 本地下载目录
+
+	if bucketName == "" || region == "" || objectName == "" || localDir == "" {
+		return "", errors.New("invalid parameters: bucket name, region, object name, and local directory are required")
+	}
+
+	cfg := oss.LoadDefaultConfig().
+		WithCredentialsProvider(credentials.NewEnvironmentVariableCredentialsProvider()).
+		WithRegion(region)
+
+	client := oss.NewClient(cfg)
+
+	// 构造本地文件路径
+	localFilePath := fmt.Sprintf("%s/%s", localDir, objectName)
+
+	// 使用 GetObjectToFile 方法将文件下载到本地
+	_, err := client.GetObjectToFile(context.TODO(), &oss.GetObjectRequest{
+		Bucket: oss.Ptr(bucketName),
+		Key:    oss.Ptr(objectName),
+	}, localFilePath)
+
+	if err != nil {
+		return "", fmt.Errorf("failed to download file to local path: %v", err)
+	}
+
+	return localFilePath, nil
 }
 
 // DeleteFile 从阿里云OSS删除文件

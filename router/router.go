@@ -22,5 +22,11 @@ func SetupRoutes(r *gin.Engine) {
 	v2 := r.Group("/api/v2")
 	{
 		v2.GET("/list", api.ListFilesHandlerV2)
+		v2.GET("/download", api.DownloadFileHandlerV2)
+	}
+
+	v3 := r.Group("/api/v3")
+	{
+		v3.GET("/download", api.DownloadFileHandlerV3)
 	}
 }

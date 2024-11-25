@@ -90,6 +90,90 @@ func DownloadFileHandler(c *gin.Context) {
 	c.Data(http.StatusOK, "application/octet-stream", data)
 }
 
+// DownloadFileHandlerV2 文件下载接口
+// @Summary 获取文件下载链接
+// @Description 根据文件名生成下载链接
+// @Tags 文件管理
+// @Accept json
+// @Produce json
+// @Param objectName query string true "文件名"
+// @Success 200 {object} map[string]interface{} "成功返回下载链接"
+// @Failure 400 {object} map[string]interface{} "objectName 参数缺失"
+// @Failure 500 {object} map[string]interface{} "生成下载链接失败"
+// @Router /api/v2/download [get]
+func DownloadFileHandlerV2(c *gin.Context) {
+	objectName := c.Query("objectName") // 从请求的查询参数中获取文件名
+
+	if objectName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": http.StatusBadRequest,
+			"msg":  "objectName 参数缺失",
+		})
+		return
+	}
+
+	// 调用服务函数生成下载链接
+	downloadURL, err := service.GenerateDownloadURL(objectName)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": http.StatusInternalServerError,
+			"msg":  err.Error(),
+		})
+		return
+	}
+
+	// 返回生成的下载链接
+	c.JSON(http.StatusOK, gin.H{
+		"code": http.StatusOK,
+		"msg":  "下载链接生成成功",
+		"data": map[string]interface{}{
+			"download_url": downloadURL,
+		},
+	})
+}
+
+// DownloadFileHandlerV3 文件下载接口
+// @Summary 下载文件到本地
+// @Description 根据文件名下载文件到本地目录
+// @Tags 文件管理
+// @Accept json
+// @Produce json
+// @Param objectName query string true "文件名"
+// @Success 200 {object} map[string]interface{} "成功返回文件的本地路径"
+// @Failure 400 {object} map[string]interface{} "objectName 参数缺失"
+// @Failure 500 {object} map[string]interface{} "文件下载失败"
+// @Router /api/v3/download [get]
+func DownloadFileHandlerV3(c *gin.Context) {
+	objectName := c.Query("objectName") // 从请求的查询参数中获取文件名
+
+	if objectName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": http.StatusBadRequest,
+			"msg":  "objectName 参数缺失",
+		})
+		return
+	}
+
+	// 调用服务函数下载文件到本地
+	localFilePath, err := service.DownloadFileToLocal(objectName)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": http.StatusInternalServerError,
+			"msg":  err.Error(),
+		})
+		return
+	}
+
+	// 返回本地文件路径
+	c.JSON(http.StatusOK, gin.H{
+		"code": http.StatusOK,
+		"msg":  "文件下载成功",
+		"data": map[string]interface{}{
+			"local_path": localFilePath,
+		},
+	})
+}
+
 // DeleteFileHandler 文件删除接口
 // @Summary 删除文件
 // @Description 根据文件名删除文件
